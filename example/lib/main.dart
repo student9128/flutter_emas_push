@@ -50,7 +50,7 @@ class _MyAppState extends State<MyApp> {
     await FlutterEmasPush.initPush();
   }
   registerOppo() async{
-    await FlutterEmasPush.registerOppo();
+    await FlutterEmasPush.registerOppo("","");
 
   }
 

@@ -9,14 +9,23 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
+import androidx.core.app.NotificationManagerCompat
 
-fun showNotification(context:Context,title:String,summary:String,channelID:String,channelName:String){
+fun showNotification(
+    context: Context,
+    title: String,
+    summary: String,
+    channelID: String,
+    channelName: String
+) {
     val intent = Intent()
     intent.setPackage(context.packageName)
     val pendingIntent = createPendingIntent(context, intent)
     val mNManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-    val builder: Notification.Builder = createNotificationBuilder(context, pendingIntent,title, summary,channelID)
+    val builder: Notification.Builder =
+        createNotificationBuilder(context, pendingIntent, title, summary, channelID)
 
     //设置下拉之后显示的图片
 //        builder.setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher));
@@ -32,10 +41,50 @@ fun showNotification(context:Context,title:String,summary:String,channelID:Strin
     mNManager.notify(2, notification2)
 }
 
+/**
+ * check if notification can show
+ */
+fun checkCanShowNotification(context: Context): Boolean {
+    val notificationManager: NotificationManagerCompat = NotificationManagerCompat.from(context)
+    return notificationManager.areNotificationsEnabled()
+}
+
+/**
+ * go setting page to setting notification permission
+ */
+fun goSettingPage(context: Context) {
+    val intent: Intent = Intent()
+    try {
+        intent.action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
+
+        //8.0及以后版本使用这两个extra.  >=API 26
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            intent.putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            intent.putExtra(Settings.EXTRA_CHANNEL_ID, context.applicationInfo.uid)
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            //5.0-7.1 使用这两个extra.  <= API 25, >=API 21
+            intent.putExtra("app_package", context.packageName)
+            intent.putExtra("app_uid", context.applicationInfo.uid)
+        }
+
+        context.startActivity(intent)
+    } catch (e: Exception) {
+        e.printStackTrace()
+
+        //其他低版本或者异常情况，走该节点。进入APP设置界面
+        intent.action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+        intent.putExtra("package", context.packageName)
+
+        //val uri = Uri.fromParts("package", packageName, null)
+        //intent.data = uri
+        context.startActivity(intent)
+    }
+}
+
 private fun createNotificationBuilder(
     context: Context,
     pendingIntent: PendingIntent?,
-    title:String,summary:String,channelID:String
+    title: String, summary: String, channelID: String
 ): Notification.Builder {
     val builder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         Notification.Builder(context, channelID)

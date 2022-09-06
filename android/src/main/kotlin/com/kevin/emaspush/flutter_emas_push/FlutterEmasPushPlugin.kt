@@ -4,6 +4,7 @@ import android.app.*
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.Uri
 import android.os.Build
@@ -29,58 +30,78 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
-    private lateinit var channel: MethodChannel
     private lateinit var activity: Activity
     private lateinit var context: Context
-    private var channelID:String?=null
-    private var channelName:String?=null
 
     companion object {
         val TAG = "FlutterEmasPushPlugin"
+        private var channel: MethodChannel?=null
+        private var channelID: String? = null
+        private var channelName: String? = null
+        fun showNotificationN(context: Context, title: String, summary: String) {
+            Log.e(
+                TAG,
+                "FlutterEmasPushPlugin: your channel id is $channelID,channel name is $channelName "
+            )
+            showNotification(context, title, summary, channelID ?: "", channelName ?: "")
+        }
+        /**
+         * no permission show notification,
+         *
+         * send message to flutter, your can show some tips to tell user
+         */
+
+        fun notificationDenied(){
+            channel?.invokeMethod("notificationDenied",null)
+        }
+
     }
 
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_emas_push")
-        channel.setMethodCallHandler(this)
+        channel?.setMethodCallHandler(this)
         context = flutterPluginBinding.applicationContext
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
         when (call.method) {
-            "getPlatformVersion"->result.success("Android ${android.os.Build.VERSION.RELEASE}")
+            "getPlatformVersion" -> result.success("Android ${android.os.Build.VERSION.RELEASE}")
             "initPush" -> {
                 initPush()
             }
-            "setNotificationChannelIdAndName"->{
+            "setNotificationChannelIdAndName" -> {
                 channelID = call.argument<String>("channelId")
                 channelName = call.argument<String>("channelName")
             }
-            "registerHuawei"->registerHuawei()
-            "registerXiaomi"->{
+            "registerWithMetaData" -> {
+                registerWithMetaData()
+            }
+            "registerHuawei" -> registerHuawei()
+            "registerXiaomi" -> {
                 val xiaomiId = call.argument<String>("xiaomiId")
                 val xiaomiKey = call.argument<String>("xiaomiKey")
-                registerXiaomi(xiaomiId?:"",xiaomiKey?:"")
+                registerXiaomi(xiaomiId ?: "", xiaomiKey ?: "")
             }
-            "registerOppo"->{
+            "registerOppo" -> {
                 Log.d(TAG, "init cloudchannel  oppo")
                 val appKey = call.argument<String>("appKey")
                 val appSecret = call.argument<String>("appSecret")
-                registerOppo(appKey?:"",appSecret?:"")
+                registerOppo(appKey ?: "", appSecret ?: "")
             }
-            "registerVivo"->registerVivo()
-            "registerMeizu"->{
+            "registerVivo" -> registerVivo()
+            "registerMeizu" -> {
                 val appId = call.argument<String>("appId")
                 val appKey = call.argument<String>("appKey")
-                registerMeizu(appId?:"",appKey?:"")
+                registerMeizu(appId ?: "", appKey ?: "")
             }
-            "registerGCM"->{
+            "registerGCM" -> {
                 val sendId = call.argument<String>("sendId")
                 val applicationId = call.argument<String>("applicationId")
                 val projectId = call.argument<String>("projectId")
                 val apiKey = call.argument<String>("apiKey")
-                registerGCM(sendId?:"",applicationId?:"",projectId?:"",apiKey?:"")
+                registerGCM(sendId ?: "", applicationId ?: "", projectId ?: "", apiKey ?: "")
             }
-            "testPush"->{
+            "testPush" -> {
                 testPush()
             }
             else -> result.notImplemented()
@@ -88,32 +109,34 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
-        channel.setMethodCallHandler(null)
+        channel?.setMethodCallHandler(null)
     }
-    fun showNotificationN(title:String,summary:String){
-        showNotification(context,title,summary,channelID?:"",channelName?:"")
-    }
-    fun testPush(){
+
+    fun testPush() {
         var intent = Intent(Intent.ACTION_MAIN, null)
         intent.addCategory(Intent.CATEGORY_LAUNCHER)
         intent.setPackage(context.packageName)
         val packageManager = activity.packageManager
         val activities = packageManager.queryIntentActivities(intent, 0)
         val resolveInfo = activities.iterator().next()
-        if(resolveInfo!=null){
+        if (resolveInfo != null) {
             val packageName = resolveInfo.activityInfo.packageName
             val name = resolveInfo.activityInfo.name
-            var cn = ComponentName(packageName,name)
-            intent.component=cn
+            var cn = ComponentName(packageName, name)
+            intent.component = cn
         }
-//        val intent = Intent()
-        val pendingIntent =  if(Build.VERSION.SDK_INT>=Build.VERSION_CODES.S) PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-        else PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.getActivity(
+                context,
+                0,
+                intent,
+                PendingIntent.FLAG_IMMUTABLE
+            )
+            else PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
         val mNManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         val notification2: Notification
-        val builder: Notification.Builder
-        builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        val builder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             Notification.Builder(context, "12345667")
         } else {
             Notification.Builder(context)
@@ -171,36 +194,108 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         pushService.register(activity, object : CommonCallback {
             override fun onSuccess(response: String?) {
                 var deviceId = pushService.deviceId
-                Log.d(TAG, "init cloudchannel success==$response,,,deviceID=$deviceId")
+                Log.d(TAG, "init push success: $response,deviceID=$deviceId")
             }
 
             override fun onFailed(errorCode: String, errorMessage: String) {
-                Log.d(TAG,"init cloudchannel failed -- errorcode:$errorCode -- errorMessage:$errorMessage"
+                Log.d(
+                    TAG, "init push failed: errorCode:$errorCode, errorMessage:$errorMessage"
                 )
             }
         })
     }
-    fun registerHuawei(){
-        Log.d(TAG,"init cloudchannel  -- registerHuawei")
+
+    /**
+     * config the key on AndroidManifest.xml,
+     *
+     * then called this method.
+     */
+    fun registerWithMetaData() {
+        val applicationInfo = activity.packageManager.getApplicationInfo(
+            activity.packageName,
+            PackageManager.GET_META_DATA
+        )
+        val metaData = applicationInfo.metaData
+        val huaweiId = metaData.getString("com.huawei.hms.client.appid")
+        if (!huaweiId.isNullOrEmpty()) {
+            registerHuawei()
+        } else {
+            Log.d(TAG, "register:no huawei push register,if you need,please config it.")
+        }
+        val xiaomiId = metaData.getString("com.mi.push.app_id")
+        val xiaomiKey = metaData.getString("com.mi.push.app_key")
+        if (!xiaomiId.isNullOrEmpty() && !xiaomiKey.isNullOrEmpty()) {
+            registerXiaomi(xiaomiId, xiaomiKey)
+        } else {
+            Log.d(TAG, "register:no xiaomi push register,if you need,please config it.")
+        }
+        val oppoAppKey = metaData.getString("com.oppo.push.app_key")
+        val oppoSecret = metaData.getString("com.oppo.push.app_secret")
+        if (!oppoAppKey.isNullOrEmpty() && !oppoSecret.isNullOrEmpty()) {
+            registerOppo(oppoAppKey, oppoSecret)
+        } else {
+            Log.d(TAG, "register:no oppo push register,if you need,please config it.")
+        }
+        val vivoAppKey = metaData.getString("com.vivo.push.api_key")
+        val vivoAppId = metaData.getString("com.vivo.push.app_id")
+        if (!vivoAppKey.isNullOrEmpty() && !vivoAppId.isNullOrEmpty()) {
+            registerVivo()
+        } else {
+            Log.d(TAG, "register:no vivo push register,if you need,please config it.")
+        }
+        val meizuAppId = metaData.getString("com.meizu.push.app_id")
+        val meizuAppKey = metaData.getString("com.meizu.push.app_key")
+        if (!meizuAppId.isNullOrEmpty() && !meizuAppKey.isNullOrEmpty()) {
+            registerMeizu(meizuAppId, meizuAppKey)
+        } else {
+            Log.d(TAG, "register:no meizu push register,if you need,please config it.")
+        }
+        val sendId = metaData.getString("com.google.firebase.send_id")
+        val applicationId = metaData.getString("com.google.firebase.application_id")
+        val projectId = metaData.getString("com.google.firebase.project_id")
+        val apiKey = metaData.getString("com.google.firebase.api_key")
+        if (!sendId.isNullOrEmpty() && !applicationId.isNullOrEmpty() && !projectId.isNullOrEmpty() && !apiKey.isNullOrEmpty()) {
+            registerGCM(sendId, applicationId, projectId, apiKey)
+        } else {
+            Log.d(TAG, "register:no GCM push register,if you need,please config it.")
+        }
+    }
+
+    fun registerHuawei() {
+        Log.d(TAG, "you called registerHuawei")
         HuaWeiRegister.register(activity.application)
     }
-    fun registerXiaomi(xiaomiId:String,xiaomiKey:String){
-        Log.d(TAG,"init cloudchannel  -- registerXiaomi")
-        MiPushRegister.register(activity,xiaomiId,xiaomiKey)
+
+    fun registerXiaomi(xiaomiId: String, xiaomiKey: String) {
+        Log.d(TAG, "you called registerXiaomi")
+        MiPushRegister.register(activity, xiaomiId, xiaomiKey)
     }
-    fun registerOppo(appKey:String,appSecret:String){
-        Log.d(TAG,"init cloudchannel  -- registerOppo")
-        OppoRegister.register(activity,appKey,appSecret)
+
+    fun registerOppo(appKey: String, appSecret: String) {
+        Log.d(TAG, "you called registerOppo")
+        OppoRegister.register(activity, appKey, appSecret)
     }
-    fun registerVivo(){
+
+    fun registerVivo() {
+        Log.d(TAG, "you called registerVivo")
         VivoRegister.register(activity)
     }
-    fun registerMeizu(appId:String,appKey:String){
-        MeizuRegister.register(activity,appId,appKey)
+
+    fun registerMeizu(appId: String, appKey: String) {
+        Log.d(TAG, "you called registerMeizu")
+        MeizuRegister.register(activity, appId, appKey)
     }
-    fun registerGCM(sendId:String, applicationId:String, projectId:String, apiKey:String){
+
+    fun registerGCM(sendId: String, applicationId: String, projectId: String, apiKey: String) {
+        Log.d(TAG, "you called registerGCM")
         //GCM/FCM辅助通道注册
-        GcmRegister.register(activity, sendId, applicationId, projectId, apiKey); //sendId/applicationId/projectId/apiKey为已获得的参数
+        GcmRegister.register(
+            activity,
+            sendId,
+            applicationId,
+            projectId,
+            apiKey
+        ); //sendId/applicationId/projectId/apiKey为已获得的参数
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {

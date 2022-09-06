@@ -44,17 +44,27 @@ android {
     }
 
     defaultConfig {
-//        applicationId "com.kevin.emaspush.flutter_emas_push_example"
+        applicationId "com.kevin.emaspush.flutter_emas_push_example"
         minSdkVersion 19
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         manifestPlaceholders=[
-//                applicationName:"阿里云测试",
                 emasPushAppKey:"",
                 emasPushAppSecret:"",
-                huaweiAppId:""
-
+                huaweiAppId:"",
+                miAppId:"",
+                miAppKey:"",
+                oppoAppKey:"",
+                oppoAppSecret:"",
+                vivoAppKey:"",
+                vivoAppId:"",
+                meizuAppId:"",
+                meizuAppKey:"",
+                sendId:"",//GCM
+                applicatinoId:"",//GCM
+                projectId:"",//GCM
+                apiKey:""//GCM
         ]
     }
 
