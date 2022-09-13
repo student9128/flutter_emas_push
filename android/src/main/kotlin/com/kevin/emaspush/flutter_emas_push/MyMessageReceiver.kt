@@ -11,6 +11,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.alibaba.sdk.android.push.MessageReceiver
 import com.alibaba.sdk.android.push.notification.CPushMessage
@@ -23,11 +24,12 @@ class MyMessageReceiver : MessageReceiver() {
         summary: String,
         extraMap: Map<String, String>
     ) {
-        if (checkCanShowNotification(context)) {
-            FlutterEmasPushPlugin.showNotificationN(context, title, summary)
-        } else {
-            FlutterEmasPushPlugin.notificationDenied()
-        }
+        Toast.makeText(context,summary,Toast.LENGTH_SHORT).show()
+//        if (checkCanShowNotification(context)) {
+//            FlutterEmasPushPlugin.showNotificationN(context, title, summary)
+//        } else {
+//            FlutterEmasPushPlugin.notificationDenied()
+//        }
         // TODO处理推送通知
         Log.e(TAG, "Receive notification, title: $title, summary: $summary, extraMap: $extraMap")
 //        context.sendBroadcast()
@@ -93,6 +95,7 @@ class MyMessageReceiver : MessageReceiver() {
         summary: String,
         extraMap: String
     ) {
+        Toast.makeText(context,"onNotificationOpened",Toast.LENGTH_SHORT).show()
         Log.e(TAG, "onNotificationOpened, title: $title, summary: $summary, extraMap:$extraMap")
     }
 

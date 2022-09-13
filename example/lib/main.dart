@@ -47,15 +47,24 @@ class _MyAppState extends State<MyApp> {
   }
 
   initPush() async {
-    await FlutterEmasPush.initPush();
+    FlutterEmasPush.initPush();
+    FlutterEmasPush.setNotificationChannelIdAndName("123456", "androidTest");
+    FlutterEmasPush.registerWithMetaData();
   }
   registerOppo() async{
-    await FlutterEmasPush.registerOppo("","");
+    FlutterEmasPush.registerOppo("","");
 
   }
 
   testPush() async{
-    await FlutterEmasPush.testPush();
+    FlutterEmasPush.setNotificationChannelIdAndName("123456", "androidTest");
+    var bool = await FlutterEmasPush.canShowNotification();
+    print('hello===$bool');
+    if(bool){
+    await FlutterEmasPush.testPush("test","testContent");
+    }else{
+      FlutterEmasPush.goSettingNotificationPage();
+    }
   }
 
   @override
@@ -83,6 +92,11 @@ class _MyAppState extends State<MyApp> {
                   testPush();
                 },
                 child: Text('testPush')),
+            ElevatedButton(
+                onPressed: (){
+                 FlutterEmasPush.registerWithMetaData();
+                },
+                child: Text('registerWithMetaData')),
           ],
         ),
       ),

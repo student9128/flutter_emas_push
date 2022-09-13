@@ -9,6 +9,7 @@ import android.graphics.Color
 import android.net.Uri
 import android.os.Build
 import android.util.Log
+import android.widget.Toast
 import androidx.annotation.NonNull
 import com.alibaba.sdk.android.push.CloudPushService
 import com.alibaba.sdk.android.push.CommonCallback
@@ -30,12 +31,12 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
-    private lateinit var activity: Activity
     private lateinit var context: Context
 
     companion object {
+        private lateinit var activity: Activity
         val TAG = "FlutterEmasPushPlugin"
-        private var channel: MethodChannel?=null
+        private var channel: MethodChannel? = null
         private var channelID: String? = null
         private var channelName: String? = null
         fun showNotificationN(context: Context, title: String, summary: String) {
@@ -45,14 +46,32 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             )
             showNotification(context, title, summary, channelID ?: "", channelName ?: "")
         }
+
         /**
          * no permission show notification,
          *
          * send message to flutter, your can show some tips to tell user
          */
 
-        fun notificationDenied(){
-            channel?.invokeMethod("notificationDenied",null)
+        fun notificationDenied() {
+            channel?.invokeMethod("notificationDenied", null)
+        }
+
+        fun launchApp() {
+            Toast.makeText(activity, "打开app", Toast.LENGTH_SHORT).show()
+//            var intent = Intent(Intent.ACTION_MAIN, null)
+//            intent.addCategory(Intent.CATEGORY_LAUNCHER)
+//            intent.setPackage(activity.packageName)
+//            val packageManager = activity.packageManager
+//            val activities = packageManager.queryIntentActivities(intent, 0)
+//            val resolveInfo = activities.iterator().next()
+//            if (resolveInfo != null) {
+//                val packageName = resolveInfo.activityInfo.packageName
+//                val name = resolveInfo.activityInfo.name
+//                var cn = ComponentName(packageName, name)
+//                intent.component = cn
+//            }
+//            activity.startActivity(intent)
         }
 
     }
@@ -72,8 +91,10 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "setNotificationChannelIdAndName" -> {
                 channelID = call.argument<String>("channelId")
                 channelName = call.argument<String>("channelName")
+                Log.i(TAG, "channelId=$channelID,channelName=$channelName")
             }
             "registerWithMetaData" -> {
+                Log.i(TAG, "you called registerWithMetaData")
                 registerWithMetaData()
             }
             "registerHuawei" -> registerHuawei()
@@ -101,8 +122,19 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val apiKey = call.argument<String>("apiKey")
                 registerGCM(sendId ?: "", applicationId ?: "", projectId ?: "", apiKey ?: "")
             }
+            "canShowNotification" -> {
+                val checkCanShowNotification = checkCanShowNotification(context)
+                Log.i(TAG, "you called canShowNotification,result=$checkCanShowNotification")
+                result.success(checkCanShowNotification)
+            }
+            "goSettingPage" -> {
+                goSettingPage(context)
+            }
             "testPush" -> {
-                testPush()
+                val title = call.argument<String>("title")
+                val content = call.argument<String>("content")
+                Log.i(TAG, "you called testPush,title=$title,content=$content")
+                testPush(title ?: "", content ?: "")
             }
             else -> result.notImplemented()
         }
@@ -112,79 +144,95 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         channel?.setMethodCallHandler(null)
     }
 
-    fun testPush() {
-        var intent = Intent(Intent.ACTION_MAIN, null)
-        intent.addCategory(Intent.CATEGORY_LAUNCHER)
-        intent.setPackage(context.packageName)
-        val packageManager = activity.packageManager
-        val activities = packageManager.queryIntentActivities(intent, 0)
-        val resolveInfo = activities.iterator().next()
-        if (resolveInfo != null) {
-            val packageName = resolveInfo.activityInfo.packageName
-            val name = resolveInfo.activityInfo.name
-            var cn = ComponentName(packageName, name)
-            intent.component = cn
+    private fun testPush(title: String, content: String) {
+        if (channelID.isNullOrEmpty() || channelName.isNullOrEmpty()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Toast.makeText(
+                    activity,
+                    "you must set notification channel id and name",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    activity,
+                    "you must set notification channel id and name in Android O or higher",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
         }
-        val pendingIntent =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.getActivity(
-                context,
-                0,
-                intent,
-                PendingIntent.FLAG_IMMUTABLE
-            )
-            else PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
-        val mNManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        val notification2: Notification
-        val builder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            Notification.Builder(context, "12345667")
-        } else {
-            Notification.Builder(context)
-        }
-        //设置标题
-        //设置标题
-        builder.setContentTitle("test")
-        //设置内容
-        //设置内容
-        builder.setContentText("EmasPush test")
-        //设置状态栏显示的图标，建议图标颜色透明
-        //设置状态栏显示的图标，建议图标颜色透明
-        builder.setSmallIcon(context.applicationInfo.icon)
-        // 设置通知灯光（LIGHTS）、铃声（SOUND）、震动（VIBRATE）、（ALL 表示都设置）
-        // 设置通知灯光（LIGHTS）、铃声（SOUND）、震动（VIBRATE）、（ALL 表示都设置）
-        builder.setDefaults(Notification.DEFAULT_ALL)
-        //灯光三个参数，颜色（argb）、亮时间（毫秒）、暗时间（毫秒）,灯光与设备有关
-        //灯光三个参数，颜色（argb）、亮时间（毫秒）、暗时间（毫秒）,灯光与设备有关
-        builder.setLights(Color.RED, 200, 200)
-        // 铃声,传入铃声的 Uri（可以本地或网上）我这没有铃声就不传了
-        // 铃声,传入铃声的 Uri（可以本地或网上）我这没有铃声就不传了
-        builder.setSound(Uri.parse(""))
-        // 震动，传入一个 long 型数组，表示 停、震、停、震 ... （毫秒）
-        // 震动，传入一个 long 型数组，表示 停、震、停、震 ... （毫秒）
-        builder.setVibrate(longArrayOf(0, 200, 200, 200, 200, 200))
-        // 通知栏点击后自动消失
-        // 通知栏点击后自动消失
-        builder.setAutoCancel(true)
-        // 简单通知栏设置 Intent
-        // 简单通知栏设置 Intent
-        builder.setContentIntent(pendingIntent)
-        builder.setPriority(Notification.PRIORITY_HIGH)
-
-        //设置下拉之后显示的图片
-//        builder.setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher));
-
-        //设置下拉之后显示的图片
-//        builder.setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher));
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel =
-                NotificationChannel("12345667", "安卓10aa", NotificationManager.IMPORTANCE_DEFAULT)
-            channel.enableLights(true) //是否在桌面icon右上角展示小红点
-            channel.lightColor = Color.GREEN //小红点颜色
-            channel.setShowBadge(false) //是否在久按桌面图标时显示此渠道的通知
-            mNManager.createNotificationChannel(channel)
-        }
-        notification2 = builder.build()
-        mNManager.notify(2, notification2)
+        showNotificationN(context, title, content)
+//        var intent = Intent(Intent.ACTION_MAIN, null)
+//        intent.addCategory(Intent.CATEGORY_LAUNCHER)
+//        intent.setPackage(context.packageName)
+//        val packageManager = activity.packageManager
+//        val activities = packageManager.queryIntentActivities(intent, 0)
+//        val resolveInfo = activities.iterator().next()
+//        if (resolveInfo != null) {
+//            val packageName = resolveInfo.activityInfo.packageName
+//            val name = resolveInfo.activityInfo.name
+//            var cn = ComponentName(packageName, name)
+//            intent.component = cn
+//        }
+//        val pendingIntent =
+//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.getActivity(
+//                context,
+//                0,
+//                intent,
+//                PendingIntent.FLAG_IMMUTABLE
+//            )
+//            else PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+//        val mNManager =
+//            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+//        val notification2: Notification
+//        val builder: Notification.Builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            Notification.Builder(context, "12345667")
+//        } else {
+//            Notification.Builder(context)
+//        }
+//        //设置标题
+//        //设置标题
+//        builder.setContentTitle("test")
+//        //设置内容
+//        //设置内容
+//        builder.setContentText("EmasPush test")
+//        //设置状态栏显示的图标，建议图标颜色透明
+//        //设置状态栏显示的图标，建议图标颜色透明
+//        builder.setSmallIcon(context.applicationInfo.icon)
+//        // 设置通知灯光（LIGHTS）、铃声（SOUND）、震动（VIBRATE）、（ALL 表示都设置）
+//        // 设置通知灯光（LIGHTS）、铃声（SOUND）、震动（VIBRATE）、（ALL 表示都设置）
+//        builder.setDefaults(Notification.DEFAULT_ALL)
+//        //灯光三个参数，颜色（argb）、亮时间（毫秒）、暗时间（毫秒）,灯光与设备有关
+//        //灯光三个参数，颜色（argb）、亮时间（毫秒）、暗时间（毫秒）,灯光与设备有关
+//        builder.setLights(Color.RED, 200, 200)
+//        // 铃声,传入铃声的 Uri（可以本地或网上）我这没有铃声就不传了
+//        // 铃声,传入铃声的 Uri（可以本地或网上）我这没有铃声就不传了
+//        builder.setSound(Uri.parse(""))
+//        // 震动，传入一个 long 型数组，表示 停、震、停、震 ... （毫秒）
+//        // 震动，传入一个 long 型数组，表示 停、震、停、震 ... （毫秒）
+//        builder.setVibrate(longArrayOf(0, 200, 200, 200, 200, 200))
+//        // 通知栏点击后自动消失
+//        // 通知栏点击后自动消失
+//        builder.setAutoCancel(true)
+//        // 简单通知栏设置 Intent
+//        // 简单通知栏设置 Intent
+//        builder.setContentIntent(pendingIntent)
+//        builder.setPriority(Notification.PRIORITY_HIGH)
+//
+//        //设置下拉之后显示的图片
+////        builder.setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher));
+//
+//        //设置下拉之后显示的图片
+////        builder.setLargeIcon(BitmapFactory.decodeResource(context.getResources(), R.mipmap.ic_launcher));
+//        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//            val channel =
+//                NotificationChannel("12345667", "安卓10aa", NotificationManager.IMPORTANCE_DEFAULT)
+//            channel.enableLights(true) //是否在桌面icon右上角展示小红点
+//            channel.lightColor = Color.GREEN //小红点颜色
+//            channel.setShowBadge(false) //是否在久按桌面图标时显示此渠道的通知
+//            mNManager.createNotificationChannel(channel)
+//        }
+//        notification2 = builder.build()
+//        mNManager.notify(2, notification2)
     }
 
     private fun initPush() {
@@ -225,7 +273,8 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         val xiaomiId = metaData.getString("com.mi.push.app_id")
         val xiaomiKey = metaData.getString("com.mi.push.app_key")
         if (!xiaomiId.isNullOrEmpty() && !xiaomiKey.isNullOrEmpty()) {
-            registerXiaomi(xiaomiId, xiaomiKey)
+            Log.d(TAG, "xiaomiId=$xiaomiId,xiaomiKey=$xiaomiKey")
+            registerXiaomi("2882303761518975876", "5651897568876")
         } else {
             Log.d(TAG, "register:no xiaomi push register,if you need,please config it.")
         }
@@ -238,7 +287,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
         val vivoAppKey = metaData.getString("com.vivo.push.api_key")
         val vivoAppId = metaData.getString("com.vivo.push.app_id")
-        if (!vivoAppKey.isNullOrEmpty() && !vivoAppId.isNullOrEmpty()) {
+        if (!vivoAppKey.isNullOrEmpty() && !vivoAppId.toString().isNullOrEmpty()) {
             registerVivo()
         } else {
             Log.d(TAG, "register:no vivo push register,if you need,please config it.")
@@ -267,8 +316,8 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     }
 
     fun registerXiaomi(xiaomiId: String, xiaomiKey: String) {
-        Log.d(TAG, "you called registerXiaomi")
-        MiPushRegister.register(activity, xiaomiId, xiaomiKey)
+        Log.d(TAG, "you called registerXiaomi,$xiaomiId,$xiaomiKey")
+        MiPushRegister.register(activity.application, xiaomiId, xiaomiKey)
     }
 
     fun registerOppo(appKey: String, appSecret: String) {

@@ -15,6 +15,9 @@ class FlutterEmasPush {
   static initPush() async {
     await _channel.invokeMethod("initPush");
   }
+  static registerWithMetaData() async{
+    await _channel.invokeMethod("registerWithMetaData");
+  }
 
   /// register oppo push
   static registerOppo(String appKey,String appSecret) async {
@@ -74,8 +77,18 @@ class FlutterEmasPush {
     };
     await _channel.invokeMethod("setNotificationChannelIdAndName", params);
   }
+  static Future<bool> canShowNotification() async{
+   return await _channel.invokeMethod("canShowNotification");
+  }
+  static goSettingNotificationPage() async{
+    await _channel.invokeMethod("goSettingPage");
+  }
 
-  static testPush() async {
-    await _channel.invokeMethod("testPush");
+  static Future testPush(String title,String content) async {
+    Map<String, String> params = {
+      "title": title,
+      "content": content
+    };
+    await _channel.invokeMethod("testPush",params);
   }
 }

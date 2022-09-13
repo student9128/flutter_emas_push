@@ -44,21 +44,21 @@ android {
     }
 
     defaultConfig {
-        applicationId "com.kevin.emaspush.flutter_emas_push_example"
+        applicationId "com.kevin.emaspush.flutter_emas_push_example"//申请key的包名
         minSdkVersion 19
         targetSdkVersion flutter.targetSdkVersion
         versionCode flutterVersionCode.toInteger()
         versionName flutterVersionName
         manifestPlaceholders=[
-                emasPushAppKey:"",
-                emasPushAppSecret:"",
-                huaweiAppId:"",
+                emasPushAppKey:"",//阿里云的appKey
+                emasPushAppSecret:"",//阿里云的appSecret
+                huaweiAppId:"",//华为的一定要配置签名文件
                 miAppId:"",
                 miAppKey:"",
                 oppoAppKey:"",
                 oppoAppSecret:"",
                 vivoAppKey:"",
-                vivoAppId:"",
+                vivoAppId:"",//数字的要用反斜杠\\123456
                 meizuAppId:"",
                 meizuAppKey:"",
                 sendId:"",//GCM
@@ -67,7 +67,20 @@ android {
                 apiKey:""//GCM
         ]
     }
-
+    signingConfigs {
+        debug {
+            storeFile file('xxx')
+            storePassword 'xxx'
+            keyAlias 'xxx'
+            keyPassword 'xxx'
+        }
+        release {
+            storeFile file('xxx')
+            storePassword 'xxx'
+            keyAlias 'xxx'
+            keyPassword 'xxx'
+        }
+    }
     buildTypes {
         release {
             //

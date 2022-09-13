@@ -66,6 +66,7 @@ fun goSettingPage(context: Context) {
             intent.putExtra("app_package", context.packageName)
             intent.putExtra("app_uid", context.applicationInfo.uid)
         }
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
 
         context.startActivity(intent)
     } catch (e: Exception) {
