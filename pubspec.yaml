@@ -1,7 +1,7 @@
 name: flutter_emas_push
-description: A new Flutter plugin.
+description: A flutter plugin integrating EMAS push.
 version: 0.0.1
-homepage:
+homepage: https://github.com/student9128/flutter_emas_push
 
 environment:
   sdk: ">=2.16.0 <3.0.0"
