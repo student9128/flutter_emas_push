@@ -1,3 +1,6 @@
+## 0.0.3
+optimize code.
+
 ## 0.0.2
 register according to different brand mobile phone.
 
