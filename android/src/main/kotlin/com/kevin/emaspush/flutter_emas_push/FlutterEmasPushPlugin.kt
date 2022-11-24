@@ -264,40 +264,60 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             PackageManager.GET_META_DATA
         )
         val metaData = applicationInfo.metaData
-        val huaweiId = metaData.getString("com.huawei.hms.client.appid")
-        if (!huaweiId.isNullOrEmpty()) {
-            registerHuawei()
+        if (RomUtil.isEmui) {
+            val huaweiId = metaData.getString("com.huawei.hms.client.appid")
+            if (!huaweiId.isNullOrEmpty()) {
+                registerHuawei()
+            } else {
+                Log.d(TAG, "register:no huawei push register,if you need,please config it.")
+            }
         } else {
-            Log.d(TAG, "register:no huawei push register,if you need,please config it.")
+            Log.d(TAG, "This phone is not HUAWEI.")
         }
-        val xiaomiId = metaData.getString("com.mi.push.app_id")
-        val xiaomiKey = metaData.getString("com.mi.push.app_key")
-        if (!xiaomiId.isNullOrEmpty() && !xiaomiKey.isNullOrEmpty()) {
-            Log.d(TAG, "xiaomiId=$xiaomiId,xiaomiKey=$xiaomiKey")
-            registerXiaomi("2882303761518975876", "5651897568876")
+        if (RomUtil.isMiui) {
+            val xiaomiId = metaData.getString("com.mi.push.app_id")
+            val xiaomiKey = metaData.getString("com.mi.push.app_key")
+            if (!xiaomiId.isNullOrEmpty() && !xiaomiKey.isNullOrEmpty()) {
+                Log.d(TAG, "xiaomiId=$xiaomiId,xiaomiKey=$xiaomiKey")
+                registerXiaomi("2882303761518975876", "5651897568876")
+            } else {
+                Log.d(TAG, "register:no xiaomi push register,if you need,please config it.")
+            }
         } else {
-            Log.d(TAG, "register:no xiaomi push register,if you need,please config it.")
+            Log.d(TAG, "This phone is not XIAOMI.")
         }
-        val oppoAppKey = metaData.getString("com.oppo.push.app_key")
-        val oppoSecret = metaData.getString("com.oppo.push.app_secret")
-        if (!oppoAppKey.isNullOrEmpty() && !oppoSecret.isNullOrEmpty()) {
-            registerOppo(oppoAppKey, oppoSecret)
+        if (RomUtil.isOppo) {
+            val oppoAppKey = metaData.getString("com.oppo.push.app_key")
+            val oppoSecret = metaData.getString("com.oppo.push.app_secret")
+            if (!oppoAppKey.isNullOrEmpty() && !oppoSecret.isNullOrEmpty()) {
+                registerOppo(oppoAppKey, oppoSecret)
+            } else {
+                Log.d(TAG, "register:no oppo push register,if you need,please config it.")
+            }
         } else {
-            Log.d(TAG, "register:no oppo push register,if you need,please config it.")
+            Log.d(TAG, "This phone is not OPPO.")
         }
-        val vivoAppKey = metaData.getString("com.vivo.push.api_key")
-        val vivoAppId = metaData.getString("com.vivo.push.app_id")
-        if (!vivoAppKey.isNullOrEmpty() && !vivoAppId.toString().isNullOrEmpty()) {
-            registerVivo()
+        if (RomUtil.isVivo) {
+            val vivoAppKey = metaData.getString("com.vivo.push.api_key")
+            val vivoAppId = metaData.getString("com.vivo.push.app_id")
+            if (!vivoAppKey.isNullOrEmpty() && !vivoAppId.toString().isNullOrEmpty()) {
+                registerVivo()
+            } else {
+                Log.d(TAG, "register:no vivo push register,if you need,please config it.")
+            }
         } else {
-            Log.d(TAG, "register:no vivo push register,if you need,please config it.")
+            Log.d(TAG, "This phone is not VIVO.")
         }
-        val meizuAppId = metaData.getString("com.meizu.push.app_id")
-        val meizuAppKey = metaData.getString("com.meizu.push.app_key")
-        if (!meizuAppId.isNullOrEmpty() && !meizuAppKey.isNullOrEmpty()) {
-            registerMeizu(meizuAppId, meizuAppKey)
+        if (RomUtil.isFlyme) {
+            val meizuAppId = metaData.getString("com.meizu.push.app_id")
+            val meizuAppKey = metaData.getString("com.meizu.push.app_key")
+            if (!meizuAppId.isNullOrEmpty() && !meizuAppKey.isNullOrEmpty()) {
+                registerMeizu(meizuAppId, meizuAppKey)
+            } else {
+                Log.d(TAG, "register:no meizu push register,if you need,please config it.")
+            }
         } else {
-            Log.d(TAG, "register:no meizu push register,if you need,please config it.")
+            Log.d(TAG, "This phone is not MEIZU.")
         }
         val sendId = metaData.getString("com.google.firebase.send_id")
         val applicationId = metaData.getString("com.google.firebase.application_id")
@@ -310,32 +330,32 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         }
     }
 
-    fun registerHuawei() {
+    private fun registerHuawei() {
         Log.d(TAG, "you called registerHuawei")
         HuaWeiRegister.register(activity.application)
     }
 
-    fun registerXiaomi(xiaomiId: String, xiaomiKey: String) {
+    private fun registerXiaomi(xiaomiId: String, xiaomiKey: String) {
         Log.d(TAG, "you called registerXiaomi,$xiaomiId,$xiaomiKey")
         MiPushRegister.register(activity.application, xiaomiId, xiaomiKey)
     }
 
-    fun registerOppo(appKey: String, appSecret: String) {
+    private fun registerOppo(appKey: String, appSecret: String) {
         Log.d(TAG, "you called registerOppo")
         OppoRegister.register(activity, appKey, appSecret)
     }
 
-    fun registerVivo() {
+    private fun registerVivo() {
         Log.d(TAG, "you called registerVivo")
         VivoRegister.register(activity)
     }
 
-    fun registerMeizu(appId: String, appKey: String) {
+    private fun registerMeizu(appId: String, appKey: String) {
         Log.d(TAG, "you called registerMeizu")
         MeizuRegister.register(activity, appId, appKey)
     }
 
-    fun registerGCM(sendId: String, applicationId: String, projectId: String, apiKey: String) {
+    private fun registerGCM(sendId: String, applicationId: String, projectId: String, apiKey: String) {
         Log.d(TAG, "you called registerGCM")
         //GCM/FCM辅助通道注册
         GcmRegister.register(

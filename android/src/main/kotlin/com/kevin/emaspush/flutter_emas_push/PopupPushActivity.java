@@ -24,6 +24,6 @@ public class PopupPushActivity extends AndroidPopupActivity {
     protected void onSysNoticeOpened(String title, String summary, Map<String, String> extMap) {
         Log.d(TAG,"OnMiPushSysNoticeOpened, title: " + title + ", content: " + summary + ", extMap: " + extMap);
 //        FlutterEmasPushPlugin.Companion.launchApp();
-        Toast.makeText(this,"onSysNoticeOpened===",Toast.LENGTH_SHORT).show();
+//        Toast.makeText(this,"onSysNoticeOpened===",Toast.LENGTH_SHORT).show();
     }
 }
