@@ -1,3 +1,7 @@
-## 0.0.1
+## 0.0.2
+register according to different brand mobile phone.
 
-* TODO: Describe initial release.
+## 0.0.1
+initial release.
+a flutter plugin integrated EMAS push.
+
