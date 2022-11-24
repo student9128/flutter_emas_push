@@ -14,9 +14,9 @@
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
 
-<!--    旧 oppo 推送权限相关-->
-    <uses-permission android:name="com.coloros.mcs.permission.RECIEVE_MCS_MESSAGE"/>
-    <uses-permission android:name="com.heytap.mcs.permission.RECIEVE_MCS_MESSAGE"/>
+    <!--    旧 oppo 推送权限相关-->
+    <uses-permission android:name="com.coloros.mcs.permission.RECIEVE_MCS_MESSAGE" />
+    <uses-permission android:name="com.heytap.mcs.permission.RECIEVE_MCS_MESSAGE" />
 
     <application android:usesCleartextTraffic="true">
         <meta-data
@@ -54,11 +54,14 @@
             android:value="${meizuAppKey}" />
         <meta-data
             android:name="com.google.firebase.send_id"
-            android:value="${sendId}" /> <meta-data
+            android:value="${sendId}" />
+        <meta-data
             android:name="com.google.firebase.application_id"
-            android:value="${applicatinoId}" /> <meta-data
+            android:value="${applicatinoId}" />
+        <meta-data
             android:name="com.google.firebase.project_id"
-            android:value="${projectId}" /> <meta-data
+            android:value="${projectId}" />
+        <meta-data
             android:name="com.google.firebase.api_key"
             android:value="${apiKey}" />
         <!-- 消息接收监听器 （用户可自主扩展） -->
@@ -75,7 +78,8 @@
                 <action android:name="com.alibaba.sdk.android.push.RECEIVE" />
             </intent-filter>
         </receiver>
-        <service android:name="MyPushIntentService"
+        <service
+            android:name="MyPushIntentService"
             android:exported="true">
             <intent-filter>
                 <action android:name="com.alibaba.push2.action.NOTIFICATION_OPENED" />
@@ -87,7 +91,20 @@
                 <action android:name="com.alibaba.sdk.android.push.RECEIVE" />
             </intent-filter>
         </service>
-        <activity android:name=".PopupPushActivity"
-            android:exported="true"/>
+        <activity
+            android:name=".PopupPushActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <!--vivo一定要配置applicationId-->
+                <data
+                    android:host="${applicationId}"
+                    android:path="/thirdpush"
+                    android:scheme="agoo" />
+            </intent-filter>
+        </activity>
     </application>
 </manifest>

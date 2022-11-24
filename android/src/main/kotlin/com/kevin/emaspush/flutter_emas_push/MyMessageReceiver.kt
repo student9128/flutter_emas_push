@@ -24,7 +24,7 @@ class MyMessageReceiver : MessageReceiver() {
         summary: String,
         extraMap: Map<String, String>
     ) {
-        Toast.makeText(context,summary,Toast.LENGTH_SHORT).show()
+//        Toast.makeText(context,summary,Toast.LENGTH_SHORT).show()
 //        if (checkCanShowNotification(context)) {
 //            FlutterEmasPushPlugin.showNotificationN(context, title, summary)
 //        } else {
@@ -95,7 +95,7 @@ class MyMessageReceiver : MessageReceiver() {
         summary: String,
         extraMap: String
     ) {
-        Toast.makeText(context,"onNotificationOpened",Toast.LENGTH_SHORT).show()
+//        Toast.makeText(context,"onNotificationOpened",Toast.LENGTH_SHORT).show()
         Log.e(TAG, "onNotificationOpened, title: $title, summary: $summary, extraMap:$extraMap")
     }
 
