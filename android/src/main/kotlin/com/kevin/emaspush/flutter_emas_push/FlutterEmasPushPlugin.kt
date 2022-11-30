@@ -1,12 +1,8 @@
 package com.kevin.emaspush.flutter_emas_push
 
 import android.app.*
-import android.content.ComponentName
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Color
-import android.net.Uri
 import android.os.Build
 import android.util.Log
 import android.widget.Toast
@@ -24,6 +20,7 @@ import io.flutter.plugin.common.MethodCall
 import io.flutter.plugin.common.MethodChannel
 import io.flutter.plugin.common.MethodChannel.MethodCallHandler
 import io.flutter.plugin.common.MethodChannel.Result
+import org.json.JSONObject
 
 /** FlutterEmasPushPlugin */
 class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
@@ -31,7 +28,8 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     ///
     /// This local reference serves to register the plugin with the Flutter Engine and unregister it
     /// when the Flutter Engine is detached from the Activity
-    private lateinit var context: Context
+    private lateinit var mContext: Context
+    private var mPushService: CloudPushService? = null
 
     companion object {
         private lateinit var activity: Activity
@@ -79,7 +77,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onAttachedToEngine(@NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding) {
         channel = MethodChannel(flutterPluginBinding.binaryMessenger, "flutter_emas_push")
         channel?.setMethodCallHandler(this)
-        context = flutterPluginBinding.applicationContext
+        mContext = flutterPluginBinding.applicationContext
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -122,13 +120,41 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 val apiKey = call.argument<String>("apiKey")
                 registerGCM(sendId ?: "", applicationId ?: "", projectId ?: "", apiKey ?: "")
             }
+            "bindAccount" -> {
+                var account = call.argument<String>("account")
+                bindAccount(account!!,result)
+            }
+            "unbindAccount" -> {
+                unbindAccount(result)
+            }
+            "bindTag" -> {
+                var tagTarget = call.argument<Int>("tagTarget")
+                var tags = call.argument<Array<String>>("tags")
+                var alias = call.argument<String>("alias")
+                bindTag(tagTarget!!, tags!!, alias, result)
+
+            }
+            "unbindTag" -> {
+                var tagTarget = call.argument<Int>("tagTarget")
+                var tags = call.argument<Array<String>>("tags")
+                var alias = call.argument<String>("alias")
+                unbindTag(tagTarget!!, tags!!, alias, result)
+            }
+            "addAlias"->{
+                var alias = call.argument<String>("alias")
+                addAlias(alias!!,result)
+            }
+            "removeAlias"->{
+                var alias = call.argument<String>("alias")
+                removeAlias(alias!!,result)
+            }
             "canShowNotification" -> {
-                val checkCanShowNotification = checkCanShowNotification(context)
+                val checkCanShowNotification = checkCanShowNotification(mContext)
                 Log.i(TAG, "you called canShowNotification,result=$checkCanShowNotification")
                 result.success(checkCanShowNotification)
             }
             "goSettingPage" -> {
-                goSettingPage(context)
+                goSettingPage(mContext)
             }
             "testPush" -> {
                 val title = call.argument<String>("title")
@@ -160,7 +186,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 ).show()
             }
         }
-        showNotificationN(context, title, content)
+        showNotificationN(mContext, title, content)
 //        var intent = Intent(Intent.ACTION_MAIN, null)
 //        intent.addCategory(Intent.CATEGORY_LAUNCHER)
 //        intent.setPackage(context.packageName)
@@ -237,20 +263,22 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 
     private fun initPush() {
         PushServiceFactory.init(activity)
-        val pushService = PushServiceFactory.getCloudPushService()
-        pushService.setLogLevel(CloudPushService.LOG_DEBUG) //仅适用于Debug包，正式包不需要此行
-        pushService.register(activity, object : CommonCallback {
-            override fun onSuccess(response: String?) {
-                var deviceId = pushService.deviceId
-                Log.d(TAG, "init push success: $response,deviceID=$deviceId")
-            }
+        mPushService = PushServiceFactory.getCloudPushService()
+        mPushService?.let {
+            it.setLogLevel(CloudPushService.LOG_DEBUG) //仅适用于Debug包，正式包不需要此行
+            it.register(activity, object : CommonCallback {
+                override fun onSuccess(response: String?) {
+                    var deviceId = it.deviceId
+                    Log.d(TAG, "init push success: $response,deviceID=$deviceId")
+                }
 
-            override fun onFailed(errorCode: String, errorMessage: String) {
-                Log.d(
-                    TAG, "init push failed: errorCode:$errorCode, errorMessage:$errorMessage"
-                )
-            }
-        })
+                override fun onFailed(errorCode: String, errorMessage: String) {
+                    Log.d(
+                        TAG, "init push failed: errorCode:$errorCode, errorMessage:$errorMessage"
+                    )
+                }
+            })
+        }
     }
 
     /**
@@ -258,7 +286,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      *
      * then called this method.
      */
-    fun registerWithMetaData() {
+    private fun registerWithMetaData() {
         val applicationInfo = activity.packageManager.getApplicationInfo(
             activity.packageName,
             PackageManager.GET_META_DATA
@@ -355,7 +383,12 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         MeizuRegister.register(activity, appId, appKey)
     }
 
-    private fun registerGCM(sendId: String, applicationId: String, projectId: String, apiKey: String) {
+    private fun registerGCM(
+        sendId: String,
+        applicationId: String,
+        projectId: String,
+        apiKey: String
+    ) {
         Log.d(TAG, "you called registerGCM")
         //GCM/FCM辅助通道注册
         GcmRegister.register(
@@ -364,8 +397,111 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             applicationId,
             projectId,
             apiKey
-        ); //sendId/applicationId/projectId/apiKey为已获得的参数
+        ) //sendId/applicationId/projectId/apiKey为已获得的参数
     }
+
+    /**
+     * 将应用内账号和推送通道相关联，可以实现按账号的定点消息推送
+     * @param account 应用内账号
+     */
+    private fun bindAccount(account: String, result: Result) {
+        mPushService?.let {
+            it.bindAccount(account,commonCallback(result))
+        }
+    }
+
+    /**
+     * 将应用内账号和推送通道取消关联。
+     */
+    private fun unbindAccount(result:Result) {
+        mPushService?.let {
+            it.unbindAccount(commonCallback(result))
+        }
+    }
+
+    /**
+     * 绑定标签到指定目标。
+     *
+     * - 支持向设备、账号和别名绑定标签，绑定类型有参数target指定。
+     * - App最多支持定义1万个标签，单个标签支持的最大长度为129字符。
+     * - 绑定标签在10分钟内生效。
+     * - 不建议在单个标签上绑定超过十万级设备，否则，发起对该标签的推送可能需要较长的处理时间，无法保障响应速度。
+     * 此种情况下，建议您采用全推方式，或将设备集合拆分到更细粒度的标签，多次调用推送接口分别推送给这些标签来避免此问题。
+     *
+     * @param target 目标类型可选值：
+     * @see CloudPushService.DEVICE_TARGET int DEVICE_TARGET = 1; 本设备
+     * @see CloudPushService.ACCOUNT_TARGET int ACCOUNT_TARGET = 2; 本设备绑定的账号
+     * @see CloudPushService.ALIAS_TARGET int ALIAS_TARGET = 3; 别名
+     *
+     * @param tags 目标类型可选值：
+     * @param alias 别名，仅当target=3时生效
+     */
+    private fun bindTag(target: Int, tags: Array<String>, alias: String?, result: Result) {
+        mPushService?.let {
+            it.bindTag(target, tags, alias,commonCallback(result))
+        }
+    }
+
+
+    /**
+     * 解绑指定目标的标签。
+     *
+     * - 支持解绑设备、账号和别名的标签，解绑类型有参数target指定。
+     * - 解绑标签只是解除设备和标签的绑定关系，不等同于删除标签，即该App下标签依然存在，系统当前不支持删除标签。
+     * - 解绑标签在10分钟内生效。
+     *
+     * @param target 目标类型可选值：
+     * @see CloudPushService.DEVICE_TARGET int DEVICE_TARGET = 1; 本设备
+     * @see CloudPushService.ACCOUNT_TARGET int ACCOUNT_TARGET = 2; 本设备绑定的账号
+     * @see CloudPushService.ALIAS_TARGET int ALIAS_TARGET = 3; 别名
+     *
+     * @param tags 目标类型可选值：
+     * @param alias 别名，仅当target=3时生效
+     */
+    private fun unbindTag(target: Int, tags: Array<String>, alias: String?, result: Result) {
+        mPushService?.let {
+            it.unbindTag(target, tags, alias,commonCallback(result))
+        }
+    }
+
+    /**
+     * 为设备添加别名。
+     * @param alias 别名
+     */
+    private fun  addAlias(alias: String,result:Result){
+        mPushService?.let {
+            it.addAlias(alias,commonCallback(result))
+        }
+
+    }
+
+    /**
+     * 删除设备别名
+     * @param alias 别名
+     */
+    private fun  removeAlias(alias: String,result:Result){
+        mPushService?.let {
+            it.removeAlias(alias, commonCallback(result))
+        }
+    }
+
+    private fun commonCallback(result: Result) =
+        object : CommonCallback {
+            override fun onSuccess(s: String?) {
+                var json = JSONObject()
+                json.put("isSuccess", true)
+                json.put("result", s ?: "")
+                result.success(json.toString())
+            }
+
+            override fun onFailed(errorCode: String?, errorMsg: String?) {
+                var json = JSONObject()
+                json.put("isSuccess", false)
+                json.put("errorCode", errorCode)
+                json.put("errorMsg", errorMsg)
+                result.success(json.toString())
+            }
+        }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
         activity = binding.activity
