@@ -52,7 +52,9 @@ A flutter plugin integrating EMAS push.
 > add this code in AndroidManifest.xml (vivo push needs `<data android:host="${applicationId}"
 android:path="/thirdpush"
 android:scheme="agoo" />`)
-* maybe you don't need it(this plugin has added it) ,only you find you can not receive push when offline.
+
+* if you find you can not receive push when offline, please check it.
+
 
 ```xml
 
@@ -66,6 +68,13 @@ android:scheme="agoo" />`)
         <data android:host="${applicationId}" android:path="/thirdpush" android:scheme="agoo" />
     </intent-filter>
 </activity>
+```
+if you need jump to your MainActivity when click notification, `PopupPushActivity` is not needed. we need following code.
+```kotlin
+   PopupNotifyClick { title, summary, extMap ->
+    Log.d("MainActivity", "Receive notification, title: $title, content: $summary, extraMap:$extMap")}
+    .onCreate(this,this.intent)
+
 ```
 
 > initPush
@@ -83,6 +92,18 @@ android:scheme="agoo" />`)
      FlutterEmasPush.registerHuawei();
      FlutterEmasPush.registerMeizu();
      FlutterEmasPush.registerGCM("","","","");
+
+```
+> bind or unbind account/tag/alias
+```dart
+     FlutterEmasPush.bindAccount('testAccount');
+     FlutterEmasPush.unbindAccount();
+
+     FlutterEmasPush.bindTag(1, ['tags'], 'alias');
+     FlutterEmasPush.unbindTag(1, ['tags'], 'alias');
+
+     FlutterEmasPush.addAlias('alias');
+     FlutterEmasPush.removeAlias('alias');
 
 ```
 > if you find app crash when releasing app with obfuscating. maybe you need add these code to your `proguard-rules.pro`

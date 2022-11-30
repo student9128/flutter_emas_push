@@ -1,3 +1,5 @@
+## 0.0.4
+add bind account/tag/alias methods.
 ## 0.0.3
 optimize code.
 
