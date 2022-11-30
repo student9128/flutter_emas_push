@@ -55,6 +55,25 @@ class _MyAppState extends State<MyApp> {
     FlutterEmasPush.registerOppo("","");
 
   }
+  bindAccount()async{
+    FlutterEmasPush.bindAccount('testAccount');
+  }
+  unBindAccount() async{
+    FlutterEmasPush.unbindAccount();
+  }
+  bindTag() async{
+    FlutterEmasPush.bindTag(1, ['tags'], 'alias');
+  }
+  unbindTag() async{
+    FlutterEmasPush.unbindTag(1, ['tags'], 'alias');
+  }
+  addAlias() async{
+    FlutterEmasPush.addAlias('alias');
+  }
+  removeAlias() async{
+    FlutterEmasPush.removeAlias('alias');
+  }
+  
 
   testPush() async{
     FlutterEmasPush.setNotificationChannelIdAndName("123456", "androidTest");

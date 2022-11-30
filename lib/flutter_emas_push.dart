@@ -84,7 +84,7 @@ class FlutterEmasPush {
   ///
   ///
   static Future<String> bindTag(
-      String target, List<String> tags, String? alias) async {
+      int target, List<String> tags, String? alias) async {
     Map<String, dynamic> params = {
       "tagTarget": target,
       "tags": tags,
@@ -94,7 +94,7 @@ class FlutterEmasPush {
   }
 
   static Future<String> unbindTag(
-      String target, List<String> tags, String? alias) async {
+      int target, List<String> tags, String? alias) async {
     Map<String, dynamic> params = {
       "tagTarget": target,
       "tags": tags,
