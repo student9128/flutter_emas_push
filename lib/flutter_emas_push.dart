@@ -102,6 +102,9 @@ class FlutterEmasPush {
     };
     return await _channel.invokeMethod("unbindTag", params);
   }
+  static Future<String> listTags() async{
+    return await _channel.invokeMethod("listTags");
+  }
 
   /// 为设备添加别名。
   static Future<String> addAlias(String alias) async {

@@ -140,6 +140,9 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 var alias = call.argument<String>("alias")
                 unbindTag(tagTarget!!, tags!!, alias, result)
             }
+            "listTags"->{
+                listTags(result)
+            }
             "addAlias"->{
                 var alias = call.argument<String>("alias")
                 addAlias(alias!!,result)
@@ -461,6 +464,15 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     private fun unbindTag(target: Int, tags: Array<String>, alias: String?, result: Result) {
         mPushService?.let {
             it.unbindTag(target, tags, alias,commonCallback(result))
+        }
+    }
+
+    /**
+     * 查询目标绑定的标签，当前仅支持查询设备标签。
+     */
+    private fun listTags(result: Result){
+        mPushService?.let {
+            it.listTags(CloudPushService.DEVICE_TARGET,commonCallback(result));
         }
     }
 
