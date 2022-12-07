@@ -1,3 +1,5 @@
+## 0.07
+add init push result,if success return device id.
 ## 0.0.6
 add log utils.
 ## 0.0.5 
