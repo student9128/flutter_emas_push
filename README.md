@@ -121,6 +121,12 @@ if you need jump to your MainActivity when click notification, `PopupPushActivit
 
   }
 ```
+> show log or set emas log level
+```dart
+FlutterEmasPush.showLog(kDebugMode);
+FlutterEmasPush.showEMASLogLevel(2);
+
+```
 > if you find app crash when releasing app with obfuscating. maybe you need add these code to your `proguard-rules.pro`
 ```java
     -keepclasseswithmembernames class ** {
