@@ -1,3 +1,5 @@
+## 0.0.5 
+add some new methods. now we can listen `onNotificationOpened`/`onNotificationReceived` in flutter.
 ## 0.0.4
 add bind account/tag/alias methods.
 ## 0.0.3

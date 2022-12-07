@@ -106,6 +106,21 @@ if you need jump to your MainActivity when click notification, `PopupPushActivit
      FlutterEmasPush.removeAlias('alias');
 
 ```
+> receive notification when online, listening `onNotificationOpened` like following code.
+```dart
+ _initPushMethodCallHandler() async{
+    var channel = FlutterEmasPush.channel;
+    channel.setMethodCallHandler((call)async{
+      switch(call.method){
+        case 'onNotificationOpened':
+          debugPrint('notificationOpened===========${call.arguments}');
+       
+          break;
+      }
+    });
+
+  }
+```
 > if you find app crash when releasing app with obfuscating. maybe you need add these code to your `proguard-rules.pro`
 ```java
     -keepclasseswithmembernames class ** {
