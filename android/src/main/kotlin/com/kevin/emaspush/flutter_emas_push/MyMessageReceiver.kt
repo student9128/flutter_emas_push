@@ -1,7 +1,6 @@
 package com.kevin.emaspush.flutter_emas_push
 
 import android.content.Context
-import android.util.Log
 import com.alibaba.sdk.android.push.MessageReceiver
 import com.alibaba.sdk.android.push.notification.CPushMessage
 
@@ -20,8 +19,8 @@ class MyMessageReceiver : MessageReceiver() {
 //        } else {
 //            FlutterEmasPushPlugin.notificationDenied()
 //        }
-        // TODO处理推送通知
-        Log.e(TAG, "Receive notification, title: $title, summary: $summary, extraMap: $extraMap")
+
+        LogUtils.e(TAG, "Receive notification, title: $title, summary: $summary, extraMap: $extraMap")
 //        context.sendBroadcast()
 //        val intent = Intent()
 //        intent.setPackage(context.packageName)
@@ -73,7 +72,7 @@ class MyMessageReceiver : MessageReceiver() {
     }
 
     public override fun onMessage(context: Context, cPushMessage: CPushMessage) {
-        Log.e(
+        LogUtils.e(
             TAG,
             "onMessage, messageId: " + cPushMessage.messageId + ", title: " + cPushMessage.title + ", content:" + cPushMessage.content
         )
@@ -87,7 +86,7 @@ class MyMessageReceiver : MessageReceiver() {
         extraMap: String
     ) {
 //        Toast.makeText(context,"onNotificationOpened",Toast.LENGTH_SHORT).show()
-        Log.e(TAG, "onNotificationOpened, title: $title, summary: $summary, extraMap:$extraMap")
+        LogUtils.e(TAG, "onNotificationOpened, title: $title, summary: $summary, extraMap:$extraMap")
         FlutterEmasPushPlugin.onNotificationOpened(title, summary, extraMap)
     }
 
@@ -97,7 +96,7 @@ class MyMessageReceiver : MessageReceiver() {
         summary: String,
         extraMap: String
     ) {
-        Log.e(
+        LogUtils.e(
             TAG,
             "onNotificationClickedWithNoAction, title: $title, summary: $summary, extraMap:$extraMap"
         )
@@ -113,14 +112,14 @@ class MyMessageReceiver : MessageReceiver() {
         openActivity: String,
         openUrl: String
     ) {
-        Log.e(
+        LogUtils.e(
             TAG,
             "onNotificationReceivedInApp, title: $title, summary: $summary, extraMap:$extraMap, openType:$openType, openActivity:$openActivity, openUrl:$openUrl"
         )
     }
 
     override fun onNotificationRemoved(context: Context, messageId: String) {
-        Log.e(TAG, "onNotificationRemoved")
+        LogUtils.e(TAG, "onNotificationRemoved")
     }
 
     companion object {

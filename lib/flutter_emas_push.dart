@@ -153,4 +153,23 @@ class FlutterEmasPush {
     Map<String, String> params = {"title": title, "content": content};
     await _channel.invokeMethod("testPush", params);
   }
+  /// is show plugin log
+  static Future showLog(bool b) async {
+    Map<String, bool> params = {"showLog": b,};
+    await _channel.invokeMethod("showLog", params);
+  }
+  /// set EMAS log level
+  ///
+  /// log from EMAS push SDK
+  ///
+  ///  * int LOG_OFF = -1;
+  ///  * int LOG_ERROR = 0;
+  ///  * int LOG_INFO = 1;
+  ///  * int LOG_DEBUG = 2;
+  ///
+  ///
+  static Future showEMASLogLevel(int level) async {
+    Map<String, int> params = {"logLevel": level,};
+    await _channel.invokeMethod("setEMASLogLevel", params);
+  }
 }

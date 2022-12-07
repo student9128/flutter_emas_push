@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.annotation.NonNull
 import com.alibaba.sdk.android.push.CloudPushService
@@ -37,7 +36,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         private var channelID: String? = null
         private var channelName: String? = null
         fun showNotificationN(context: Context, title: String, summary: String) {
-            Log.e(
+            LogUtils.e(
                 TAG,
                 "FlutterEmasPushPlugin: your channel id is $channelID,channel name is $channelName "
             )
@@ -51,13 +50,13 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         ) {
             var json = JSONObject()
             var jsonExt = JSONObject()
-            for ((key,value)in extraMap){
-                jsonExt.put(key,value)
+            for ((key, value) in extraMap) {
+                jsonExt.put(key, value)
             }
-            json.put("title",title)
-            json.put("content",summary)
-            json.put("extraParams",jsonExt.toString())
-            channel?.invokeMethod("onNotificationReceived",json.toString())
+            json.put("title", title)
+            json.put("content", summary)
+            json.put("extraParams", jsonExt.toString())
+            channel?.invokeMethod("onNotificationReceived", json.toString())
 
         }
 
@@ -76,7 +75,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             json.put("title", title)
             json.put("content", summary)
             json.put("extraParams", JSONObject(extraMap))
-            Log.i(TAG, "notificationOpened====${json}")
+            LogUtils.i(TAG, "notificationOpened====${json}")
             channel?.invokeMethod("onNotificationOpened", json.toString())
         }
 
@@ -126,10 +125,10 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "setNotificationChannelIdAndName" -> {
                 channelID = call.argument<String>("channelId")
                 channelName = call.argument<String>("channelName")
-                Log.i(TAG, "channelId=$channelID,channelName=$channelName")
+                LogUtils.i(TAG, "channelId=$channelID,channelName=$channelName")
             }
             "registerWithMetaData" -> {
-                Log.i(TAG, "you called registerWithMetaData")
+                LogUtils.i(TAG, "you called registerWithMetaData")
                 registerWithMetaData()
             }
             "registerHuawei" -> registerHuawei()
@@ -139,7 +138,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 registerXiaomi(xiaomiId ?: "", xiaomiKey ?: "")
             }
             "registerOppo" -> {
-                Log.d(TAG, "init cloudchannel  oppo")
+                LogUtils.d(TAG, "init cloudchannel  oppo")
                 val appKey = call.argument<String>("appKey")
                 val appSecret = call.argument<String>("appSecret")
                 registerOppo(appKey ?: "", appSecret ?: "")
@@ -190,7 +189,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
             "canShowNotification" -> {
                 val checkCanShowNotification = checkCanShowNotification(mContext)
-                Log.i(TAG, "you called canShowNotification,result=$checkCanShowNotification")
+                LogUtils.i(TAG, "you called canShowNotification,result=$checkCanShowNotification")
                 result.success(checkCanShowNotification)
             }
             "goSettingPage" -> {
@@ -199,14 +198,24 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "testPush" -> {
                 val title = call.argument<String>("title")
                 val content = call.argument<String>("content")
-                Log.i(TAG, "you called testPush,title=$title,content=$content")
+                LogUtils.i(TAG, "you called testPush,title=$title,content=$content")
                 testPush(title ?: "", content ?: "")
             }
-            "showNotification"->{
+            "showNotification" -> {
                 val title = call.argument<String>("title")
                 val content = call.argument<String>("content")
-                Log.i(TAG, "you called showNotification,title=$title,content=$content")
+                LogUtils.i(TAG, "you called showNotification,title=$title,content=$content")
                 testPush(title ?: "", content ?: "")
+            }
+            "showLog" -> {
+                val b = call.argument<Boolean>("showLog")
+                LogUtils.setShowLog(b ?: false)
+            }
+            "setEMASLogLevel" -> {
+                val level = call.argument<Int>("logLevel")
+                mPushService?.let {
+                    it.setLogLevel(level ?: -1)
+                }
             }
             else -> result.notImplemented()
         }
@@ -215,7 +224,8 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         channel?.setMethodCallHandler(null)
     }
-    private fun showNotification(title: String, content: String){
+
+    private fun showNotification(title: String, content: String) {
         if (channelID.isNullOrEmpty() || channelName.isNullOrEmpty()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 Toast.makeText(
@@ -329,15 +339,14 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         PushServiceFactory.init(activity)
         mPushService = PushServiceFactory.getCloudPushService()
         mPushService?.let {
-            it.setLogLevel(CloudPushService.LOG_DEBUG) //仅适用于Debug包，正式包不需要此行
             it.register(activity, object : CommonCallback {
                 override fun onSuccess(response: String?) {
                     var deviceId = it.deviceId
-                    Log.d(TAG, "init push success: $response,deviceID=$deviceId")
+                    LogUtils.d(TAG, "init push success: $response,deviceID=$deviceId")
                 }
 
                 override fun onFailed(errorCode: String, errorMessage: String) {
-                    Log.d(
+                    LogUtils.d(
                         TAG, "init push failed: errorCode:$errorCode, errorMessage:$errorMessage"
                     )
                 }
@@ -361,22 +370,22 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             if (!huaweiId.isNullOrEmpty()) {
                 registerHuawei()
             } else {
-                Log.d(TAG, "register:no huawei push register,if you need,please config it.")
+                LogUtils.d(TAG, "register:no huawei push register,if you need,please config it.")
             }
         } else {
-            Log.d(TAG, "This phone is not HUAWEI.")
+            LogUtils.d(TAG, "This phone is not HUAWEI.")
         }
         if (RomUtil.isMiui) {
             val xiaomiId = metaData.getString("com.mi.push.app_id")
             val xiaomiKey = metaData.getString("com.mi.push.app_key")
             if (!xiaomiId.isNullOrEmpty() && !xiaomiKey.isNullOrEmpty()) {
-                Log.d(TAG, "xiaomiId=$xiaomiId,xiaomiKey=$xiaomiKey")
+                LogUtils.d(TAG, "xiaomiId=$xiaomiId,xiaomiKey=$xiaomiKey")
                 registerXiaomi(xiaomiId, xiaomiKey)
             } else {
-                Log.d(TAG, "register:no xiaomi push register,if you need,please config it.")
+                LogUtils.d(TAG, "register:no xiaomi push register,if you need,please config it.")
             }
         } else {
-            Log.d(TAG, "This phone is not XIAOMI.")
+            LogUtils.d(TAG, "This phone is not XIAOMI.")
         }
         if (RomUtil.isOppo) {
             val oppoAppKey = metaData.getString("com.oppo.push.app_key")
@@ -384,10 +393,10 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             if (!oppoAppKey.isNullOrEmpty() && !oppoSecret.isNullOrEmpty()) {
                 registerOppo(oppoAppKey, oppoSecret)
             } else {
-                Log.d(TAG, "register:no oppo push register,if you need,please config it.")
+                LogUtils.d(TAG, "register:no oppo push register,if you need,please config it.")
             }
         } else {
-            Log.d(TAG, "This phone is not OPPO.")
+            LogUtils.d(TAG, "This phone is not OPPO.")
         }
         if (RomUtil.isVivo) {
             val vivoAppKey = metaData.getString("com.vivo.push.api_key")
@@ -395,10 +404,10 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             if (!vivoAppKey.isNullOrEmpty() && !vivoAppId.toString().isNullOrEmpty()) {
                 registerVivo()
             } else {
-                Log.d(TAG, "register:no vivo push register,if you need,please config it.")
+                LogUtils.d(TAG, "register:no vivo push register,if you need,please config it.")
             }
         } else {
-            Log.d(TAG, "This phone is not VIVO.")
+            LogUtils.d(TAG, "This phone is not VIVO.")
         }
         if (RomUtil.isFlyme) {
             val meizuAppId = metaData.getString("com.meizu.push.app_id")
@@ -406,10 +415,10 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             if (!meizuAppId.isNullOrEmpty() && !meizuAppKey.isNullOrEmpty()) {
                 registerMeizu(meizuAppId, meizuAppKey)
             } else {
-                Log.d(TAG, "register:no meizu push register,if you need,please config it.")
+                LogUtils.d(TAG, "register:no meizu push register,if you need,please config it.")
             }
         } else {
-            Log.d(TAG, "This phone is not MEIZU.")
+            LogUtils.d(TAG, "This phone is not MEIZU.")
         }
         val sendId = metaData.getString("com.google.firebase.send_id")
         val applicationId = metaData.getString("com.google.firebase.application_id")
@@ -418,32 +427,32 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         if (!sendId.isNullOrEmpty() && !applicationId.isNullOrEmpty() && !projectId.isNullOrEmpty() && !apiKey.isNullOrEmpty()) {
             registerGCM(sendId, applicationId, projectId, apiKey)
         } else {
-            Log.d(TAG, "register:no GCM push register,if you need,please config it.")
+            LogUtils.d(TAG, "register:no GCM push register,if you need,please config it.")
         }
     }
 
     private fun registerHuawei() {
-        Log.d(TAG, "you called registerHuawei")
+        LogUtils.d(TAG, "you called registerHuawei")
         HuaWeiRegister.register(activity.application)
     }
 
     private fun registerXiaomi(xiaomiId: String, xiaomiKey: String) {
-        Log.d(TAG, "you called registerXiaomi,$xiaomiId,$xiaomiKey")
+        LogUtils.d(TAG, "you called registerXiaomi,$xiaomiId,$xiaomiKey")
         MiPushRegister.register(activity.application, xiaomiId, xiaomiKey)
     }
 
     private fun registerOppo(appKey: String, appSecret: String) {
-        Log.d(TAG, "you called registerOppo")
+        LogUtils.d(TAG, "you called registerOppo")
         OppoRegister.register(activity, appKey, appSecret)
     }
 
     private fun registerVivo() {
-        Log.d(TAG, "you called registerVivo")
+        LogUtils.d(TAG, "you called registerVivo")
         VivoRegister.register(activity)
     }
 
     private fun registerMeizu(appId: String, appKey: String) {
-        Log.d(TAG, "you called registerMeizu")
+        LogUtils.d(TAG, "you called registerMeizu")
         MeizuRegister.register(activity, appId, appKey)
     }
 
@@ -453,7 +462,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         projectId: String,
         apiKey: String
     ) {
-        Log.d(TAG, "you called registerGCM")
+        LogUtils.d(TAG, "you called registerGCM")
         //GCM/FCM辅助通道注册
         GcmRegister.register(
             activity,
