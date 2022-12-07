@@ -1,6 +1,6 @@
 name: flutter_emas_push
 description: A flutter plugin integrating EMAS push. You can  push offline notification to client by mobile channel. Now HuaWei、Xiaomi,Vivo,Oppo,MeiZu,GCM supported. 
-version: 0.0.6
+version: 0.0.7
 homepage: https://github.com/student9128/flutter_emas_push
 
 environment:
