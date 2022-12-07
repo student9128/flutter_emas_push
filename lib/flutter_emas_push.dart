@@ -102,7 +102,8 @@ class FlutterEmasPush {
     };
     return await _channel.invokeMethod("unbindTag", params);
   }
-  static Future<String> listTags() async{
+
+  static Future<String> listTags() async {
     return await _channel.invokeMethod("listTags");
   }
 
@@ -128,19 +129,26 @@ class FlutterEmasPush {
     await _channel.invokeMethod("setNotificationChannelIdAndName", params);
   }
 
-/// 判断设备是否对app开启通知权限
-/// 
+  /// 判断设备是否对app开启通知权限
+  ///
   static Future<bool> canShowNotification() async {
     return await _channel.invokeMethod("canShowNotification");
   }
 
-/// 去设置页面
+  /// 去设置页面
   static goSettingNotificationPage() async {
     await _channel.invokeMethod("goSettingPage");
   }
 
-/// just for testing
-/// 
+  /// show notification
+  ///
+  static Future showNotification(String title, String content) async {
+    Map<String, String> params = {"title": title, "content": content};
+    await _channel.invokeMethod("testPush", params);
+  }
+
+  /// just for testing
+  ///
   static Future testPush(String title, String content) async {
     Map<String, String> params = {"title": title, "content": content};
     await _channel.invokeMethod("testPush", params);

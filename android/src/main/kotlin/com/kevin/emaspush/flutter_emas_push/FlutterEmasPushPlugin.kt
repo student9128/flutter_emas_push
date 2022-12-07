@@ -1,7 +1,9 @@
 package com.kevin.emaspush.flutter_emas_push
 
 import android.app.*
+import android.content.ComponentName
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
@@ -11,6 +13,7 @@ import com.alibaba.sdk.android.push.CloudPushService
 import com.alibaba.sdk.android.push.CommonCallback
 import com.alibaba.sdk.android.push.huawei.HuaWeiRegister
 import com.alibaba.sdk.android.push.noonesdk.PushServiceFactory
+import com.alibaba.sdk.android.push.notification.CPushMessage
 import com.alibaba.sdk.android.push.register.*
 
 import io.flutter.embedding.engine.plugins.FlutterPlugin
@@ -24,16 +27,12 @@ import org.json.JSONObject
 
 /** FlutterEmasPushPlugin */
 class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
-    /// The MethodChannel that will the communication between Flutter and native Android
-    ///
-    /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-    /// when the Flutter Engine is detached from the Activity
     private lateinit var mContext: Context
     private var mPushService: CloudPushService? = null
 
     companion object {
         private lateinit var activity: Activity
-        val TAG = "FlutterEmasPushPlugin"
+        const val TAG = "FlutterEmasPushPlugin"
         private var channel: MethodChannel? = null
         private var channelID: String? = null
         private var channelName: String? = null
@@ -45,31 +44,69 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             showNotification(context, title, summary, channelID ?: "", channelName ?: "")
         }
 
+        fun onNotificationReceived(
+            title: String,
+            summary: String,
+            extraMap: Map<String, String>
+        ) {
+            var json = JSONObject()
+            var jsonExt = JSONObject()
+            for ((key,value)in extraMap){
+                jsonExt.put(key,value)
+            }
+            json.put("title",title)
+            json.put("content",summary)
+            json.put("extraParams",jsonExt.toString())
+            channel?.invokeMethod("onNotificationReceived",json.toString())
+
+        }
+
         /**
          * no permission show notification,
          *
          * send message to flutter, your can show some tips to tell user
          */
 
-        fun notificationDenied() {
-            channel?.invokeMethod("notificationDenied", null)
+        fun onNotificationDenied() {
+            channel?.invokeMethod("onNotificationDenied", null)
         }
 
+        fun onNotificationOpened(title: String, summary: String, extraMap: String) {
+            var json = JSONObject()
+            json.put("title", title)
+            json.put("content", summary)
+            json.put("extraParams", JSONObject(extraMap))
+            Log.i(TAG, "notificationOpened====${json}")
+            channel?.invokeMethod("onNotificationOpened", json.toString())
+        }
+
+        fun onMessageReceived(cPushMessage: CPushMessage) {
+
+        }
+
+        fun onNotificationClickedWithNoAction(
+            title: String,
+            summary: String,
+            extraMap: String
+        ) {
+        }
+
+
         fun launchApp() {
-            Toast.makeText(activity, "打开app", Toast.LENGTH_SHORT).show()
-//            var intent = Intent(Intent.ACTION_MAIN, null)
-//            intent.addCategory(Intent.CATEGORY_LAUNCHER)
-//            intent.setPackage(activity.packageName)
-//            val packageManager = activity.packageManager
-//            val activities = packageManager.queryIntentActivities(intent, 0)
-//            val resolveInfo = activities.iterator().next()
-//            if (resolveInfo != null) {
-//                val packageName = resolveInfo.activityInfo.packageName
-//                val name = resolveInfo.activityInfo.name
-//                var cn = ComponentName(packageName, name)
-//                intent.component = cn
-//            }
-//            activity.startActivity(intent)
+//            Toast.makeText(activity, "打开app", Toast.LENGTH_SHORT).show()
+            var intent = Intent(Intent.ACTION_MAIN, null)
+            intent.addCategory(Intent.CATEGORY_LAUNCHER)
+            intent.setPackage(activity.packageName)
+            val packageManager = activity.packageManager
+            val activities = packageManager.queryIntentActivities(intent, 0)
+            val resolveInfo = activities.iterator().next()
+            if (resolveInfo != null) {
+                val packageName = resolveInfo.activityInfo.packageName
+                val name = resolveInfo.activityInfo.name
+                var cn = ComponentName(packageName, name)
+                intent.component = cn
+            }
+            activity.startActivity(intent)
         }
 
     }
@@ -122,7 +159,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             }
             "bindAccount" -> {
                 var account = call.argument<String>("account")
-                bindAccount(account!!,result)
+                bindAccount(account!!, result)
             }
             "unbindAccount" -> {
                 unbindAccount(result)
@@ -140,16 +177,16 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 var alias = call.argument<String>("alias")
                 unbindTag(tagTarget!!, tags!!, alias, result)
             }
-            "listTags"->{
+            "listTags" -> {
                 listTags(result)
             }
-            "addAlias"->{
+            "addAlias" -> {
                 var alias = call.argument<String>("alias")
-                addAlias(alias!!,result)
+                addAlias(alias!!, result)
             }
-            "removeAlias"->{
+            "removeAlias" -> {
                 var alias = call.argument<String>("alias")
-                removeAlias(alias!!,result)
+                removeAlias(alias!!, result)
             }
             "canShowNotification" -> {
                 val checkCanShowNotification = checkCanShowNotification(mContext)
@@ -165,12 +202,36 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 Log.i(TAG, "you called testPush,title=$title,content=$content")
                 testPush(title ?: "", content ?: "")
             }
+            "showNotification"->{
+                val title = call.argument<String>("title")
+                val content = call.argument<String>("content")
+                Log.i(TAG, "you called showNotification,title=$title,content=$content")
+                testPush(title ?: "", content ?: "")
+            }
             else -> result.notImplemented()
         }
     }
 
     override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
         channel?.setMethodCallHandler(null)
+    }
+    private fun showNotification(title: String, content: String){
+        if (channelID.isNullOrEmpty() || channelName.isNullOrEmpty()) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                Toast.makeText(
+                    activity,
+                    "you must set notification channel id and name",
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Toast.makeText(
+                    activity,
+                    "you must set notification channel id and name in Android O or higher",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
+        }
+        showNotificationN(mContext, title, content)
     }
 
     private fun testPush(title: String, content: String) {
@@ -310,7 +371,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             val xiaomiKey = metaData.getString("com.mi.push.app_key")
             if (!xiaomiId.isNullOrEmpty() && !xiaomiKey.isNullOrEmpty()) {
                 Log.d(TAG, "xiaomiId=$xiaomiId,xiaomiKey=$xiaomiKey")
-                registerXiaomi("2882303761518975876", "5651897568876")
+                registerXiaomi(xiaomiId, xiaomiKey)
             } else {
                 Log.d(TAG, "register:no xiaomi push register,if you need,please config it.")
             }
@@ -409,14 +470,14 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      */
     private fun bindAccount(account: String, result: Result) {
         mPushService?.let {
-            it.bindAccount(account,commonCallback(result))
+            it.bindAccount(account, commonCallback(result))
         }
     }
 
     /**
      * 将应用内账号和推送通道取消关联。
      */
-    private fun unbindAccount(result:Result) {
+    private fun unbindAccount(result: Result) {
         mPushService?.let {
             it.unbindAccount(commonCallback(result))
         }
@@ -441,7 +502,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      */
     private fun bindTag(target: Int, tags: Array<String>, alias: String?, result: Result) {
         mPushService?.let {
-            it.bindTag(target, tags, alias,commonCallback(result))
+            it.bindTag(target, tags, alias, commonCallback(result))
         }
     }
 
@@ -463,16 +524,16 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      */
     private fun unbindTag(target: Int, tags: Array<String>, alias: String?, result: Result) {
         mPushService?.let {
-            it.unbindTag(target, tags, alias,commonCallback(result))
+            it.unbindTag(target, tags, alias, commonCallback(result))
         }
     }
 
     /**
      * 查询目标绑定的标签，当前仅支持查询设备标签。
      */
-    private fun listTags(result: Result){
+    private fun listTags(result: Result) {
         mPushService?.let {
-            it.listTags(CloudPushService.DEVICE_TARGET,commonCallback(result));
+            it.listTags(CloudPushService.DEVICE_TARGET, commonCallback(result));
         }
     }
 
@@ -480,9 +541,9 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      * 为设备添加别名。
      * @param alias 别名
      */
-    private fun  addAlias(alias: String,result:Result){
+    private fun addAlias(alias: String, result: Result) {
         mPushService?.let {
-            it.addAlias(alias,commonCallback(result))
+            it.addAlias(alias, commonCallback(result))
         }
 
     }
@@ -491,7 +552,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
      * 删除设备别名
      * @param alias 别名
      */
-    private fun  removeAlias(alias: String,result:Result){
+    private fun removeAlias(alias: String, result: Result) {
         mPushService?.let {
             it.removeAlias(alias, commonCallback(result))
         }

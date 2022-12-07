@@ -1,18 +1,7 @@
 package com.kevin.emaspush.flutter_emas_push
 
-import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import android.graphics.Color
-import android.net.Uri
-import android.os.Build
 import android.util.Log
-import android.widget.Toast
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.alibaba.sdk.android.push.MessageReceiver
 import com.alibaba.sdk.android.push.notification.CPushMessage
 
@@ -24,6 +13,7 @@ class MyMessageReceiver : MessageReceiver() {
         summary: String,
         extraMap: Map<String, String>
     ) {
+        FlutterEmasPushPlugin.onNotificationReceived(title, summary, extraMap)
 //        Toast.makeText(context,summary,Toast.LENGTH_SHORT).show()
 //        if (checkCanShowNotification(context)) {
 //            FlutterEmasPushPlugin.showNotificationN(context, title, summary)
@@ -87,6 +77,7 @@ class MyMessageReceiver : MessageReceiver() {
             TAG,
             "onMessage, messageId: " + cPushMessage.messageId + ", title: " + cPushMessage.title + ", content:" + cPushMessage.content
         )
+        FlutterEmasPushPlugin.onMessageReceived(cPushMessage)
     }
 
     public override fun onNotificationOpened(
@@ -97,6 +88,7 @@ class MyMessageReceiver : MessageReceiver() {
     ) {
 //        Toast.makeText(context,"onNotificationOpened",Toast.LENGTH_SHORT).show()
         Log.e(TAG, "onNotificationOpened, title: $title, summary: $summary, extraMap:$extraMap")
+        FlutterEmasPushPlugin.onNotificationOpened(title, summary, extraMap)
     }
 
     override fun onNotificationClickedWithNoAction(
@@ -109,6 +101,7 @@ class MyMessageReceiver : MessageReceiver() {
             TAG,
             "onNotificationClickedWithNoAction, title: $title, summary: $summary, extraMap:$extraMap"
         )
+        FlutterEmasPushPlugin.onNotificationClickedWithNoAction(title, summary, extraMap)
     }
 
     override fun onNotificationReceivedInApp(
