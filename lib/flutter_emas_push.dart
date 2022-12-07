@@ -12,10 +12,14 @@ class FlutterEmasPush {
     return version;
   }
 
-  static initPush() async {
-    await _channel.invokeMethod("initPush");
+  /// init account
+  ///
+  /// return init result
+  static Future<String> initPush() async {
+   return await _channel.invokeMethod("initPush");
   }
 
+  /// register with meta
   static registerWithMetaData() async {
     await _channel.invokeMethod("registerWithMetaData");
   }

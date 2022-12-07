@@ -120,7 +120,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         when (call.method) {
             "getPlatformVersion" -> result.success("Android ${android.os.Build.VERSION.RELEASE}")
             "initPush" -> {
-                initPush()
+                initPush(result)
             }
             "setNotificationChannelIdAndName" -> {
                 channelID = call.argument<String>("channelId")
@@ -335,7 +335,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
 //        mNManager.notify(2, notification2)
     }
 
-    private fun initPush() {
+    private fun initPush(result: Result) {
         PushServiceFactory.init(activity)
         mPushService = PushServiceFactory.getCloudPushService()
         mPushService?.let {
@@ -343,12 +343,20 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 override fun onSuccess(response: String?) {
                     var deviceId = it.deviceId
                     LogUtils.d(TAG, "init push success: $response,deviceID=$deviceId")
+                    var json = JSONObject()
+                    json.put("deviceId",deviceId)
+                    json.put("isSuccess",true)
+                    result.success(json.toString())
                 }
 
                 override fun onFailed(errorCode: String, errorMessage: String) {
                     LogUtils.d(
                         TAG, "init push failed: errorCode:$errorCode, errorMessage:$errorMessage"
                     )
+                    var json = JSONObject()
+                    json.put("deviceId","")
+                    json.put("isSuccess",false)
+                    result.success(json.toString())
                 }
             })
         }
