@@ -1,4 +1,6 @@
-## 0.07
+## 0.0.8
+upgrade EMAS sdk version to 3.8.6
+## 0.0.7
 add init push result,if success return device id.
 ## 0.0.6
 add log utils.
