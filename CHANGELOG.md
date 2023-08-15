@@ -1,5 +1,7 @@
+## 0.0.9
+fix bugs and add cancel notification methods.
 ## 0.0.8
-upgrade EMAS sdk version to 3.8.6
+upgrade EMAS sdk version to 3.8.6 .
 ## 0.0.7
 add init push result,if success return device id.
 ## 0.0.6
