@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -76,11 +78,12 @@ class _MyAppState extends State<MyApp> {
   
 
   testPush() async{
+    FlutterEmasPush.showLog(true);
     FlutterEmasPush.setNotificationChannelIdAndName("123456", "androidTest");
     var bool = await FlutterEmasPush.canShowNotification();
     print('hello===$bool');
     if(bool){
-    await FlutterEmasPush.testPush("test","testContent");
+      FlutterEmasPush.showNotification("测试${Random().nextInt(100)}", "测试内容${Random().nextInt(100)}", "{\"_ALIYUN_NOTIFICATION_ID_\":\"542992\",\"mobileId\":\"27203753f1e1d4892143c6d8ce86867a\",\"_ALIYUN_NOTIFICATION_MSG_ID_\":\"8004229324234496\",\"id\":\"582\",\"businessType\":\"QEUBEELIVE\",\"_ALIYUN_NOTIFICATION_PRIORITY_\":\"1\"}","${Random().nextInt(10000)}");
     }else{
       FlutterEmasPush.goSettingNotificationPage();
     }

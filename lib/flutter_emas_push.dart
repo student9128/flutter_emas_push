@@ -146,9 +146,9 @@ class FlutterEmasPush {
 
   /// show notification
   ///
-  static Future showNotification(String title, String content) async {
-    Map<String, String> params = {"title": title, "content": content};
-    await _channel.invokeMethod("testPush", params);
+  static Future showNotification(String title, String content,String extraParams,String notificationId) async {
+    Map<String, String> params = {"title": title, "content": content,"extraParams":extraParams,"notificationId":notificationId};
+    await _channel.invokeMethod("showNotification", params);
   }
 
   /// just for testing

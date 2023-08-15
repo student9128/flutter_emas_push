@@ -35,12 +35,12 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         private var channel: MethodChannel? = null
         private var channelID: String? = null
         private var channelName: String? = null
-        fun showNotificationN(context: Context, title: String, summary: String) {
+        fun showNotificationN(context: Context, title: String, summary: String,extraMap: String="",notificationId:Int) {
             LogUtils.e(
                 TAG,
                 "FlutterEmasPushPlugin: your channel id is $channelID,channel name is $channelName "
             )
-            showNotification(context, title, summary, channelID ?: "", channelName ?: "")
+            showNotification(context, title, summary, channelID ?: "", channelName ?: "",extraMap,notificationId)
         }
 
         fun onNotificationReceived(
@@ -204,8 +204,17 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
             "showNotification" -> {
                 val title = call.argument<String>("title")
                 val content = call.argument<String>("content")
-                LogUtils.i(TAG, "you called showNotification,title=$title,content=$content")
-                testPush(title ?: "", content ?: "")
+                val extraParams = call.argument<String>("extraParams")
+                val notificationId = call.argument<String>("notificationId")
+                LogUtils.i(TAG, "you called showNotification,title=$title,content=$content,ext=$extraParams")
+                if (notificationId != null && extraParams != null) {
+                    showNotification(
+                        title ?: "",
+                        content ?: "",
+                        extraParams!!,
+                        notificationId!!.toInt()
+                    )
+                }
             }
             "showLog" -> {
                 val b = call.argument<Boolean>("showLog")
@@ -225,7 +234,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
         channel?.setMethodCallHandler(null)
     }
 
-    private fun showNotification(title: String, content: String) {
+    private fun showNotification(title: String, content: String,extraMap: String,notificationId:Int) {
         if (channelID.isNullOrEmpty() || channelName.isNullOrEmpty()) {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 Toast.makeText(
@@ -241,7 +250,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 ).show()
             }
         }
-        showNotificationN(mContext, title, content)
+        showNotificationN(mContext, title, content,extraMap,notificationId)
     }
 
     private fun testPush(title: String, content: String) {
@@ -260,7 +269,7 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                 ).show()
             }
         }
-        showNotificationN(mContext, title, content)
+        showNotificationN(mContext, title, content,"",2)
 //        var intent = Intent(Intent.ACTION_MAIN, null)
 //        intent.addCategory(Intent.CATEGORY_LAUNCHER)
 //        intent.setPackage(context.packageName)

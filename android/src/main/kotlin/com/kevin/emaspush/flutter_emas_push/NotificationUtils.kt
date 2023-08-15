@@ -17,11 +17,16 @@ fun showNotification(
     title: String,
     summary: String,
     channelID: String,
-    channelName: String
+    channelName: String,
+    extraMap: String,
+    notificationId:Int
 ) {
     val intent = Intent()
     intent.setPackage(context.packageName)
-    val pendingIntent = createPendingIntent(context, intent)
+    intent.putExtra("title",title)
+    intent.putExtra("summary",summary)
+    intent.putExtra("extraMap",extraMap)
+    val pendingIntent = createPendingIntent(context, intent,notificationId)
     val mNManager =
         context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
     val builder: Notification.Builder =
@@ -38,7 +43,7 @@ fun showNotification(
         mNManager.createNotificationChannel(channel)
     }
     val notification2 = builder.build()
-    mNManager.notify(2, notification2)
+    mNManager.notify(notificationId, notification2)
 }
 
 /**
@@ -116,12 +121,13 @@ private fun createNotificationBuilder(
 
 private fun createPendingIntent(
     context: Context,
-    intent: Intent
+    intent: Intent,
+    requestCode:Int
 ): PendingIntent? {
     val pendingIntent = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+        PendingIntent.getActivity(context, requestCode, intent, PendingIntent.FLAG_MUTABLE)
     } else {
-        PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        PendingIntent.getActivity(context, requestCode, intent, PendingIntent.FLAG_UPDATE_CURRENT)
     }
     return pendingIntent
 }
