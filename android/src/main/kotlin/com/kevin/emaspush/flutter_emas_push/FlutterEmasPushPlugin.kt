@@ -226,6 +226,19 @@ class FlutterEmasPushPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
                     it.setLogLevel(level ?: -1)
                 }
             }
+            "cancelNotification"->{
+                val mNManager =
+                    mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                mNManager.cancelAll()
+            }
+            "cancelNotificationById"->{
+                val notificationId = call.argument<String>("notificationId")
+                notificationId?.let {
+                val mNManager =
+                    mContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                mNManager.cancel(it.toInt())
+                }
+            }
             else -> result.notImplemented()
         }
     }

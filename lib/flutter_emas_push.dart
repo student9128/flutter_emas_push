@@ -176,4 +176,11 @@ class FlutterEmasPush {
     Map<String, int> params = {"logLevel": level,};
     await _channel.invokeMethod("setEMASLogLevel", params);
   }
+  static cancelNotification(){
+    _channel.invokeMethod("cancelNotification");
+  }
+  static cancelNotificationById(String id){
+    Map<String,String> params = {"notificationId":id};
+    _channel.invokeMethod("cancelNotificationById",params);
+  }
 }

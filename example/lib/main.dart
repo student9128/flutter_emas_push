@@ -53,38 +53,47 @@ class _MyAppState extends State<MyApp> {
     FlutterEmasPush.setNotificationChannelIdAndName("123456", "androidTest");
     FlutterEmasPush.registerWithMetaData();
   }
-  registerOppo() async{
-    FlutterEmasPush.registerOppo("","");
 
+  registerOppo() async {
+    FlutterEmasPush.registerOppo("", "");
   }
-  bindAccount()async{
+
+  bindAccount() async {
     FlutterEmasPush.bindAccount('testAccount');
   }
-  unBindAccount() async{
+
+  unBindAccount() async {
     FlutterEmasPush.unbindAccount();
   }
-  bindTag() async{
+
+  bindTag() async {
     FlutterEmasPush.bindTag(1, ['tags'], 'alias');
   }
-  unbindTag() async{
+
+  unbindTag() async {
     FlutterEmasPush.unbindTag(1, ['tags'], 'alias');
   }
-  addAlias() async{
+
+  addAlias() async {
     FlutterEmasPush.addAlias('alias');
   }
-  removeAlias() async{
+
+  removeAlias() async {
     FlutterEmasPush.removeAlias('alias');
   }
-  
 
-  testPush() async{
+  testPush() async {
     FlutterEmasPush.showLog(true);
     FlutterEmasPush.setNotificationChannelIdAndName("123456", "androidTest");
     var bool = await FlutterEmasPush.canShowNotification();
     print('hello===$bool');
-    if(bool){
-      FlutterEmasPush.showNotification("测试${Random().nextInt(100)}", "测试内容${Random().nextInt(100)}", "{\"_ALIYUN_NOTIFICATION_ID_\":\"542992\",\"mobileId\":\"27203753f1e1d4892143c6d8ce86867a\",\"_ALIYUN_NOTIFICATION_MSG_ID_\":\"8004229324234496\",\"id\":\"582\",\"businessType\":\"QEUBEELIVE\",\"_ALIYUN_NOTIFICATION_PRIORITY_\":\"1\"}","${Random().nextInt(10000)}");
-    }else{
+    if (bool) {
+      FlutterEmasPush.showNotification(
+          "测试${Random().nextInt(100)}",
+          "测试内容${Random().nextInt(100)}",
+          "{\"_ALIYUN_NOTIFICATION_ID_\":\"542992\",\"mobileId\":\"27203753f1e1d4892143c6d8ce86867a\",\"_ALIYUN_NOTIFICATION_MSG_ID_\":\"8004229324234496\",\"id\":\"582\",\"businessType\":\"QEUBEELIVE\",\"_ALIYUN_NOTIFICATION_PRIORITY_\":\"1\"}",
+          "${Random().nextInt(10000)}");
+    } else {
       FlutterEmasPush.goSettingNotificationPage();
     }
   }
@@ -115,10 +124,25 @@ class _MyAppState extends State<MyApp> {
                 },
                 child: Text('testPush')),
             ElevatedButton(
-                onPressed: (){
-                 FlutterEmasPush.registerWithMetaData();
+                onPressed: () {
+                  FlutterEmasPush.registerWithMetaData();
                 },
                 child: Text('registerWithMetaData')),
+            ElevatedButton(
+                onPressed: () {
+                  FlutterEmasPush.cancelNotification();
+                },
+                child: Text('cancelNotification')),
+            ElevatedButton(
+                onPressed: () {
+                  FlutterEmasPush.showNotification("测试指定Id","id是10","ext","10");
+                },
+                child: Text('showSpecificNotificationById')),
+            ElevatedButton(
+                onPressed: () {
+                  FlutterEmasPush.cancelNotificationById("10");
+                },
+                child: Text('cancelNotificationById')),
           ],
         ),
       ),
